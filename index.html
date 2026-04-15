@@ -435,45 +435,20 @@ function jsonpRead(params) {
   });
 }
 
-// ══ FORM POST (écriture) — contourne CORS sur mobile ═════════════════════
-function formPost(params) {
-  return new Promise((resolve) => {
-    if (!URL) { resolve({ok:false,error:'URL non configurée'}); return; }
-    // Crée un iframe caché pour recevoir la réponse
-    const iframeId = 'wyz_iframe_' + Date.now();
-    const formId   = 'wyz_form_'   + Date.now();
-    const iframe = document.createElement('iframe');
-    iframe.name = iframeId;
-    iframe.style.cssText = 'display:none;width:0;height:0;border:none';
-    document.body.appendChild(iframe);
-
-    const form = document.createElement('form');
-    form.method  = 'POST';
-    form.action  = URL;
-    form.target  = iframeId;
-    form.style.display = 'none';
-    form.enctype = 'application/x-www-form-urlencoded';
-
-    Object.entries(params).forEach(([k, v]) => {
-      const inp = document.createElement('input');
-      inp.type = 'hidden';
-      inp.name = k;
-      inp.value = typeof v === 'object' ? JSON.stringify(v) : String(v);
-      form.appendChild(inp);
+// ══ POST (écriture) via fetch — Worker Cloudflare gère le CORS ═══════════
+async function formPost(params) {
+  if (!URL) return { ok: false, error: 'URL non configurée' };
+  try {
+    const res = await fetch(URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(params),
     });
-
-    document.body.appendChild(form);
-
-    // Timer de nettoyage
-    const cleanup = () => {
-      if (form.parentNode) form.parentNode.removeChild(form);
-      if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-    };
-    setTimeout(() => { cleanup(); resolve({ok:true, message:'Envoyé'}); }, 3000);
-
-    iframe.onload = () => { cleanup(); resolve({ok:true, message:'Enregistré'}); };
-    form.submit();
-  });
+    const text = await res.text();
+    try { return JSON.parse(text); } catch(e) { return { ok: true }; }
+  } catch(err) {
+    return { ok: false, error: err.message };
+  }
 }
 
 // ══ SYNC ══════════════════════════════════════════════════════════════════
