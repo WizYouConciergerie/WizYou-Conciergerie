@@ -535,15 +535,17 @@ function setSyncStatus(state, msg) {
   btn.disabled = state === 'loading';
 }
 
-// Toutes les requêtes en POST (contourne CORS/redirect Google Apps Script)
+// Toutes les requêtes en POST avec Content-Type text/plain pour éviter CORS preflight
+// Le Worker/Apps Script savent parser le body JSON même en text/plain
 async function apiCall(body) {
   if (!SCRIPT_URL) throw new Error('URL non configurée');
   const res = await fetch(SCRIPT_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(body),
     redirect: 'follow'
   });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
   const text = await res.text();
   try { return JSON.parse(text); }
   catch(e) { throw new Error('Réponse invalide: ' + text.substring(0,100)); }
