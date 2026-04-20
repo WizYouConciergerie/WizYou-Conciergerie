@@ -193,7 +193,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
 <!-- ══ SETUP BANNER ══════════════════════════════════════ -->
 <div id="setup-banner">
   <span>🔗 <strong>Connexion Google Sheets</strong> — Colle ton URL de déploiement :</span>
-  <input class="setup-input" id="script-url" placeholder="https://script.google.com/macros/s/XXXXXX/exec" />
+  <input class="setup-input" id="script-url" placeholder="URL Cloudflare Worker ou Apps Script" />
   <button class="setup-btn" onclick="saveScriptUrl()">Connecter</button>
   <span class="sync-status loading" id="sync-status">Non connecté</span>
   <a onclick="showSetupGuide()">Guide d'installation →</a>
@@ -514,8 +514,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // ══ GOOGLE SHEETS SYNC ════════════════════════════════════
 function saveScriptUrl() {
   const url = document.getElementById('script-url').value.trim();
-  if (!url.startsWith('https://script.google.com')) {
-    alert("URL invalide. Elle doit commencer par https://script.google.com/macros/s/...");
+  const validStarts = ['https://script.google.com', 'https://'];
+  const isAppsScript = url.startsWith('https://script.google.com/macros/s/');
+  const isWorker = url.includes('.workers.dev') || url.includes('.cloudflare');
+  if (!isAppsScript && !isWorker) {
+    alert("URL invalide.\n\nExemples acceptés :\n• Apps Script : https://script.google.com/macros/s/XXXXX/exec\n• Cloudflare Worker : https://xxxxx.workers.dev/");
     return;
   }
   SCRIPT_URL = url;
